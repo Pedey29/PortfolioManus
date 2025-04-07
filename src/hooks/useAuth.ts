@@ -1,5 +1,4 @@
-"// Fix unused imports" 
-"import { useState } from 'react';" 
+import { useState } from 'react';
 
 // Simple authentication hook
 export const useAuth = () => {
