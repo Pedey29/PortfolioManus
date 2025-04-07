@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import { usePortfolio } from './hooks/usePortfolio';
 import { fetchMultiplePrices, calculatePortfolioPerformance } from './utils/apiService';
