@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import LoginModal from './LoginModal';
 
 interface AdminSectionProps {
   onChangeBenchmark: (symbol: string) => void;
@@ -13,26 +15,10 @@ const AdminSection: React.FC<AdminSectionProps> = ({
   onClearPortfolio,
   currentBenchmark
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const { isAdmin, login, logout } = useAuth();
   const [benchmarkSymbol, setBenchmarkSymbol] = useState(currentBenchmark);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === 'Admin') {
-      setIsAuthenticated(true);
-      setError(null);
-    } else {
-      setError('Invalid password');
-    }
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setPassword('');
-  };
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleChangeBenchmark = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,46 +27,29 @@ const AdminSection: React.FC<AdminSectionProps> = ({
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="bg-white p-4 rounded shadow-md">
-        <h3 className="text-lg font-semibold mb-4">Admin Access</h3>
-        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">{error}</div>}
-        <form onSubmit={handleLogin} className="flex flex-col space-y-4">
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              placeholder="Enter admin password"
-            />
-          </div>
-          <button
-            type="submit"
-            className="bg-uww-purple hover:bg-purple-700 text-uww-white font-bold py-2 px-4 rounded"
-          >
-            Login
-          </button>
-        </form>
-      </div>
-    );
-  }
+  const handleLogin = (username: string, password: string) => {
+    return login(username, password);
+  };
 
   return (
     <div className="bg-white p-4 rounded shadow-md">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Admin Panel</h3>
-        <button
-          onClick={handleLogout}
-          className="bg-gray-300 hover:bg-gray-400 text-black font-bold py-1 px-3 rounded text-sm"
-        >
-          Logout
-        </button>
+        {isAdmin ? (
+          <button
+            onClick={logout}
+            className="bg-gray-300 hover:bg-gray-400 text-black font-bold py-1 px-3 rounded text-sm"
+          >
+            Logout
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowLoginModal(true)}
+            className="bg-uww-purple hover:bg-purple-700 text-uww-white font-bold py-1 px-3 rounded text-sm"
+          >
+            Login
+          </button>
+        )}
       </div>
 
       <div className="space-y-6">
@@ -122,8 +91,10 @@ const AdminSection: React.FC<AdminSectionProps> = ({
             <button
               onClick={() => setShowConfirmClear(true)}
               className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full"
+              disabled={!isAdmin}
             >
               Clear All Portfolio Data
+              {!isAdmin && <span className="text-xs ml-2">(Login required)</span>}
             </button>
           ) : (
             <div className="bg-red-100 border border-red-400 text-red-700 p-3 rounded">
@@ -135,6 +106,7 @@ const AdminSection: React.FC<AdminSectionProps> = ({
                     setShowConfirmClear(false);
                   }}
                   className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded"
+                  disabled={!isAdmin}
                 >
                   Yes, Clear All Data
                 </button>
@@ -149,6 +121,12 @@ const AdminSection: React.FC<AdminSectionProps> = ({
           )}
         </div>
       </div>
+
+      <LoginModal 
+        isOpen={showLoginModal}
+        onLogin={handleLogin}
+        onClose={() => setShowLoginModal(false)}
+      />
     </div>
   );
 };

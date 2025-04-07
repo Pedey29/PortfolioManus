@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import { usePortfolio } from './hooks/usePortfolio';
+import { useAuth } from './hooks/useAuth';
 import { fetchMultiplePrices, calculatePortfolioPerformance } from './utils/apiService';
 import { initializeSampleData } from './utils/sampleData';
 import { TimePeriod, HistoricalData } from './types/types';

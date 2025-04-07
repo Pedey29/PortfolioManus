@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StockPosition } from '../types/types';
+import { useAuth } from '../hooks/useAuth';
 
 interface PositionListProps {
   positions: StockPosition[];
@@ -8,6 +9,7 @@ interface PositionListProps {
 }
 
 const PositionList: React.FC<PositionListProps> = ({ positions, onRemovePosition, isLoading }) => {
+  const { isAdmin } = useAuth();
   const [sortConfig, setSortConfig] = useState<{
     key: keyof StockPosition;
     direction: 'ascending' | 'descending';
@@ -134,12 +136,22 @@ const PositionList: React.FC<PositionListProps> = ({ positions, onRemovePosition
               </td>
               <td className="py-2 px-4">{position.sector}</td>
               <td className="py-2 px-4">
-                <button
-                  onClick={() => onRemovePosition(position.id)}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm"
-                >
-                  Remove
-                </button>
+                {isAdmin ? (
+                  <button
+                    onClick={() => onRemovePosition(position.id)}
+                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm"
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <button
+                    className="bg-gray-300 text-gray-500 font-bold py-1 px-2 rounded text-sm cursor-not-allowed"
+                    disabled
+                    title="Admin access required"
+                  >
+                    Remove
+                  </button>
+                )}
               </td>
             </tr>
           ))}

@@ -160,9 +160,46 @@ export const calculatePortfolioPerformance = async (
       return { success: false, error: 'Could not determine benchmark starting value' };
     }
     
-    // Calculate performance for each date
+    // Find initial portfolio value for percentage calculations
+    let initialPortfolioValue = 0;
+    let firstDate = '';
+    
+    // Find the first date where we have data for all positions
     for (const date of dates) {
       if (date >= startDateStr) {
+        let datePortfolioValue = 0;
+        let allPositionsHaveData = true;
+        
+        for (const position of positions) {
+          const positionData = positionsData[position.symbol];
+          if (positionData && positionData[date]) {
+            const price = parseFloat(positionData[date]['4. close']);
+            
+            // Check if position was purchased before or on this date
+            if (position.purchaseDate <= date) {
+              datePortfolioValue += price * position.shares;
+            }
+          } else {
+            allPositionsHaveData = false;
+          }
+        }
+        
+        if (allPositionsHaveData && datePortfolioValue > 0) {
+          initialPortfolioValue = datePortfolioValue;
+          firstDate = date;
+          break;
+        }
+      }
+    }
+    
+    if (initialPortfolioValue === 0) {
+      return { success: false, error: 'Could not determine initial portfolio value' };
+    }
+    
+    // Calculate performance for each date
+    for (const date of dates) {
+      if (date >= firstDate) {
+        // Calculate benchmark performance
         const benchmarkValue = parseFloat(benchmarkData[date]['4. close']);
         const benchmarkPercentChange = ((benchmarkValue / benchmarkStartValue) - 1) * 100;
         
@@ -172,7 +209,7 @@ export const calculatePortfolioPerformance = async (
         });
         
         // Calculate portfolio value for this date
-        let portfolioValue = 0;
+        let datePortfolioValue = 0;
         for (const position of positions) {
           const positionData = positionsData[position.symbol];
           if (positionData && positionData[date]) {
@@ -180,16 +217,14 @@ export const calculatePortfolioPerformance = async (
             
             // Check if position was purchased before or on this date
             if (position.purchaseDate <= date) {
-              portfolioValue += price * position.shares;
+              datePortfolioValue += price * position.shares;
             }
           }
         }
         
-        // Calculate portfolio percent change
-        // This is simplified and doesn't account for positions added over time
-        // A more accurate calculation would require tracking portfolio value changes
-        if (portfolioValue > 0) {
-          const portfolioPercentChange = ((portfolioValue / portfolioValue) - 1) * 100;
+        // Calculate portfolio percent change relative to initial value
+        if (datePortfolioValue > 0) {
+          const portfolioPercentChange = ((datePortfolioValue / initialPortfolioValue) - 1) * 100;
           portfolioPerformance.push({
             date,
             value: portfolioPercentChange
